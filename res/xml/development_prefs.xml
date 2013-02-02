@@ -60,6 +60,11 @@
         android:title="@string/enforce_read_external_title"
         android:summary="@string/enforce_read_external_summary" />
 
+    <CheckBoxPreference
+        android:key="unlock_google_play"
+        android:title="@string/unlock_google_play_title"
+        android:summary="@string/unlock_google_play_summary" />
+
     <ListPreference
         android:key="root_access"
         android:title="@string/root_access"

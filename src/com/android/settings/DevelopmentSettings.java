@@ -21,6 +21,7 @@ import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.ActivityThread;
 import android.app.AlertDialog;
@@ -99,6 +100,8 @@ public class DevelopmentSettings extends PreferenceFragment
     private static final String HDCP_CHECKING_PROPERTY = "persist.sys.hdcp_checking";
     private static final String ENFORCE_READ_EXTERNAL = "enforce_read_external";
     private static final String LOCAL_BACKUP_PASSWORD = "local_backup_password";
+    private static final String UNLOCK_GOOGLE_PLAY = "unlock_google_play";
+    private static final String GOOGLE_PLAY_PKG_NAME = "com.android.vending";
     private static final String HARDWARE_UI_PROPERTY = "persist.sys.ui.hw";
     private static final String MSAA_PROPERTY = "debug.egl.force_msaa";
     private static final String BUGREPORT = "bugreport";
@@ -166,6 +169,7 @@ public class DevelopmentSettings extends PreferenceFragment
     private CheckBoxPreference mKeepScreenOn;
     private CheckBoxPreference mEnforceReadExternal;
     private CheckBoxPreference mAllowMockLocation;
+    private CheckBoxPreference mUnlockGooglePlay;
     private PreferenceScreen mPassword;
 
     private String mDebugApp;
@@ -235,6 +239,7 @@ public class DevelopmentSettings extends PreferenceFragment
         mKeepScreenOn = findAndInitCheckboxPref(KEEP_SCREEN_ON);
         mEnforceReadExternal = findAndInitCheckboxPref(ENFORCE_READ_EXTERNAL);
         mAllowMockLocation = findAndInitCheckboxPref(ALLOW_MOCK_LOCATION);
+        mUnlockGooglePlay = findAndInitCheckboxPref(UNLOCK_GOOGLE_PLAY);
         mPassword = (PreferenceScreen) findPreference(LOCAL_BACKUP_PASSWORD);
         mAllPrefs.add(mPassword);
 
@@ -450,6 +455,8 @@ public class DevelopmentSettings extends PreferenceFragment
         updateAdbOverNetwork();
         updateCheckBox(mAllowMockLocation, Settings.Secure.getInt(cr,
                 Settings.Secure.ALLOW_MOCK_LOCATION, 0) != 0);
+        updateCheckBox(mUnlockGooglePlay, Settings.System.getInt(cr,
+                Settings.System.UNLOCK_GOOGLE_PLAY, 0) != 0);
         updateHdcpValues();
         updatePasswordSummary();
         updateDebuggerOptions();
@@ -1191,6 +1198,14 @@ public class DevelopmentSettings extends PreferenceFragment
             Settings.Secure.putInt(getActivity().getContentResolver(),
                     Settings.Secure.ALLOW_MOCK_LOCATION,
                     mAllowMockLocation.isChecked() ? 1 : 0);
+        } else if (preference == mUnlockGooglePlay) {
+            Settings.System.putInt(getActivity().getContentResolver(),
+                    Settings.System.UNLOCK_GOOGLE_PLAY,
+                    mUnlockGooglePlay.isChecked() ? 1 : 0);
+            ActivityManager am = (ActivityManager)getActivity().getSystemService(
+                    Context.ACTIVITY_SERVICE);
+            am.forceStopPackage(GOOGLE_PLAY_PKG_NAME);
+            getActivity().getPackageManager().deleteApplicationCacheFiles(GOOGLE_PLAY_PKG_NAME, null);
         } else if (preference == mDebugAppPref) {
             startActivityForResult(new Intent(getActivity(), AppPicker.class), RESULT_DEBUG_APP);
         } else if (preference == mWaitForDebugger) {
